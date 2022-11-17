@@ -33,7 +33,7 @@ attachChoice()
 		"Sprawdzenie stanu baterii")
 			openList 0;;
 		"Backup")
-			openForm 0;;
+			backup ;;
 	esac
 }
 	
@@ -57,12 +57,47 @@ openList()
 	# 	$( while read linijka; do echo $linijka; done < tmp.tmp) )"
 }
 
-openForm()
+backup()
 {
-	case $1 in
-		0)
-			zenity --forms --add
-	esac
+	# Deciding if directory is local or remote
+	# TODO
+
+	# Selecting source directory
+	source_directory="$(zenity --file-selection \
+	--title="Wskaż katalog źródłowy" \
+	--filename="./sync_test" \
+	--directory)/"
+
+	echo $source_directory >&2
+
+	# Deciding if directory is local or remote
+	# TODO
+
+	# Selecting destination directory
+	destination_directory="$(zenity --file-selection \
+	--title="Wskaż katalog wyjściowy" \
+	--filename="./destination" \
+	--directory)/"
+
+	echo $destination_directory >&2
+
+	# Running dry-run
+	zenity --question --width=400 --title="Schemat działania" \
+		--text="$( rsync -avrhn --info=progress2 $source_directory $destination_directory) \n Czy chcesz zastosować zmiany?"
+			# rsync --archive --verbose --recursive --human-readable --dry-run --info=progress2 $s $d
+	# dialog commit/abort
+	# TODO
+	decyzja=$?
+	
+	if [ "$decyzja" = 0 ]; then
+		(
+			echo "0"; echo "# Synchronizowanie w toku"; 
+			# without --dry-run
+			wynik=$(rsync -avrh --info=progress2 $source_directory $destination_directory);
+			echo "100"; echo "# $wynik";
+		)
+		zenity --progress --title="Synchronizowanie"
+	fi
 }
 
 export DISPLAY=:0
